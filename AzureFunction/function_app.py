@@ -4,7 +4,7 @@ import json
 from typing import List
 import os
 import openai
-from places import get_place_object, get_location_from_query, get_places_from_query, Place
+from AzureFunction.places import get_place_object, get_location_from_query, get_places_from_query, Place
 
 openai.api_type = "azure"
 openai.api_base = os.getenv("AZURE_OAI_ENDPOINT")
@@ -121,12 +121,28 @@ def Places(req: func.HttpRequest) -> func.HttpResponse:
 
         # Add locked places to place list
         if len(locked_places)>0:
+            locked_place_objects = [get_place_object(place).to_dict() for place in locked_places]
             locked_places.sort(key=lambda x: x[1])
             for place_id, idx in locked_places:
                 places.insert(idx, (place_id, "No name stored"))
-        places = places[:limit] # TODO there is an edge case here where a locked card could have a higher index than the limit and be excluded
+        #places = places[:limit] # TODO there is an edge case here where a locked card could have a higher index than the limit and be excluded
 
         place_objects: List[Place] = [get_place_object(place).to_dict() for place in places]
+
+        # rank places
+        ranked_places = rank_places(query, place_objects)
+
+        for place in ranked_places:
+            place_object = next((x for x in place_objects if x["id"] == place["place_id"]), None)
+            if place_object:
+                place_object["score"] = place["score"] # add score to place object
+                place_object["description"] = place["description"] # give a custom description
+            else:
+                print("Place not found")
+                pass
+        
+        place_objects.sort(key=lambda x: x["score"], reverse=True)
+        place_objects = place_objects[:limit]
         # 1. process query
         # 1.1 Open AI query - get location, interests, etc.
 
