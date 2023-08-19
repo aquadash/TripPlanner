@@ -82,6 +82,21 @@ def Places(req: func.HttpRequest) -> func.HttpResponse:
             query = req_body.get('query')
     
     if query:
+        # 1. process query
+        # 1.1 Open AI query - get location, interests, etc.
+
+        # 2. Search for places
+        # 2.1 Call places API with search parameters
+        # 2.2 Get places from API
+        # 2.3 Look for places from other data sources?
+
+        # 3. Filter places based on query
+        # not sure the best way to do this 
+
+        # 4. Format and return places
+        # 4.1 Call place details API for filtered places to get more details
+        # 4.2 Format places into places class (needs modification, it's above)
+        # 4.3 Return places as JSON
         return_object = {
         "places": get_sample_data()
         }
