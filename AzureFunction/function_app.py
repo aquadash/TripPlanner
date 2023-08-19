@@ -19,6 +19,9 @@ class Place:
     
     def to_json(self):
         return json.dumps(self.__dict__)
+    
+    def to_dict(self):
+        return self.__dict__
 
 example_place = Place("place001", 
                       "South Australian Museum", 
@@ -27,8 +30,8 @@ example_place = Place("place001",
                       ["Wheelchair-accessible car park","Wheelchair-accessible entrance","Wheelchair-accessible lift", "Wheelchair-accessible toilet"], 
                       "+61882077500", "The South Australian Museum is a natural history museum and research institution in Adelaide, South Australia, founded in 1856 and owned by the Government of South Australia. It occupies a complex of buildings on North Terrace in the cultural precinct of the Adelaide Parklands.", 0)
 
-@app.route(route="places")
-def HttpTrigger(req: func.HttpRequest) -> func.HttpResponse:
+@app.route(route="places", methods=["GET"])
+def Places(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
     query = req.params.get('query')
@@ -39,11 +42,16 @@ def HttpTrigger(req: func.HttpRequest) -> func.HttpResponse:
             pass
         else:
             query = req_body.get('query')
+    
+    return_object = {
+        "places": [example_place.to_dict()]
+    }
 
     if query:
-        return func.HttpResponse(json.dumps({"query": query, "places": [example_place.to_json()]}), status_code=200)
+        return func.HttpResponse(json.dumps(return_object), mimetype="application/json",status_code=200)
     else:
         return func.HttpResponse(
-             "Please pass a query on the query string or in the request body",
+             "Please pass a query on the query string or in the request body. Example: govhack-tripplanner.azurewebsites.net/api/places?query='test'",
              status_code=400
         )
+    
