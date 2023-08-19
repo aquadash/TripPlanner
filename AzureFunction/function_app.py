@@ -3,38 +3,13 @@ import logging
 import json
 from typing import List
 import os
-import openai 
-from dotenv import load_dotenv
+import openai
 from places import get_place_object, get_location_from_query, get_places_from_query, Place
-load_dotenv()
 
 openai.api_type = "azure"
 openai.api_base = os.getenv("AZURE_OAI_ENDPOINT")
 openai.api_version = "2023-05-15"
 openai.api_key = os.getenv("AZURE_OAI_KEY")
-
-
-app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
-
-
-# class AccessibilityFeature:
-#     def __init__(self, name, description):
-#         self.name = name
-#         self.description = description
-    
-#     def __str__(self):
-#         return {self.name: self.description}
-#     def __repr__(self):
-#         return {self.name: self.description}
-
-
-def get_sample_data():
-    with open("sample_find_places.json", "r") as f:
-        data = json.load(f)
-    places = []
-    for place in data["results"]:
-        places.append(Place.from_json(place).to_dict())
-    return places
 
 def get_entities(query):
 
@@ -45,17 +20,6 @@ def get_entities(query):
         {"role": "system", "content": system_msg},
         {"role": "user", "content": user_input}
     ]
-
-    response = openai.ChatCompletion.create(
-    engine="gpt-4",
-    messages = messages,
-    temperature=0.7,
-    max_tokens=800,
-    top_p=0.95,
-    frequency_penalty=0,
-    presence_penalty=0,
-    stop=None)
-
     response = openai.ChatCompletion.create(
         engine="gpt-4",
         messages = messages,
@@ -69,12 +33,14 @@ def get_entities(query):
     extracted_activities = response.choices[0].message['content']
 
     return json.loads(extracted_activities)
-        
+
+app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
 @app.route(route="places", methods=["GET"])
 def Places(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
+    # get query
     query = req.params.get('query')
     if not query:
         try:
@@ -83,11 +49,43 @@ def Places(req: func.HttpRequest) -> func.HttpResponse:
             pass
         else:
             query = req_body.get('query')
+
+    # limit api results
+    limit = req.params.get('limit')
+    if not limit:
+        try:
+            req_body = req.get_json()
+        except ValueError:
+            pass
+        else:
+            limit = req_body.get('limit',10)
+    try:
+        limit = int(limit)
+    except:
+        limit = 10
+    
+    # get locked places
+    try:
+        locked_places = req.get_json()
+    except ValueError:
+        pass
+    else:
+        locked_places = req_body.get('locked_places',[])
+    
     
     if query:
         entities = get_entities(query)
         location: dict = get_location_from_query(entities["location"])
         places: List[str] = get_places_from_query(entities["interests"], location)
+        
+
+        # Add locked places to place list
+        # if len(locked_places)>0:
+        #     locked_places.sort(key=lambda x: x[1])
+        #     for place_id, idx in locked_places:
+        #         places.insert(idx, (place_id, "No name stored"))
+        places = places[:limit] # TODO there is an edge case here where a locked card could have a higher index than the limit and be excluded
+
         place_objects: List[Place] = [get_place_object(place).to_dict() for place in places]
         # 1. process query
         # 1.1 Open AI query - get location, interests, etc.
@@ -106,7 +104,8 @@ def Places(req: func.HttpRequest) -> func.HttpResponse:
         # 4.3 Return places as JSON
         # print(get_entities(query))
         return_object = {
-        "places": place_objects,
+            "description": "This is a summary of the results",
+            "places": place_objects, 
         }
         return func.HttpResponse(json.dumps(return_object), mimetype="application/json",status_code=200)
     else:

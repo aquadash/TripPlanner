@@ -81,7 +81,7 @@ def get_place_object(place_result: tuple):
     result = requests.get(get_place_details_url.format(place_id=place_id, fields=fields_places, maps_key=maps_key)).json()
     if result.get("status") == "OK":
         place_result = result["result"]
-        assert place_result["place_id"] == place_id and place_result["name"] == place_name
+        assert place_result["place_id"] == place_id
     return Place.from_json(place_result)
 
 
