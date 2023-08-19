@@ -37,7 +37,7 @@ interface MapProps {
 const Map: React.FC<MapProps> = (props) => {
   const {
     places,
-    goto,
+    // goto,
     style = containerStyle,
     onMarkerClick,
     selected,

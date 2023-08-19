@@ -32,8 +32,8 @@ function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const [selected, setSelected] = useState<string | null>(null);
-  const [isHovered, setIsHovered] = useState<string>("");
-  const handleHoverMarker = (id: string | undefined) => setIsHovered(id);
+  // const [isHovered, setIsHovered] = useState<string>("");
+  // const handleHoverMarker = (id: string | undefined) => setIsHovered(id);
 
   const intialState = localStorage.getItem("itinerary");
 
