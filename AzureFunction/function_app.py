@@ -34,6 +34,46 @@ def get_entities(query):
 
     return json.loads(extracted_activities)
 
+def rank_places(query:str, places: List[Place]):
+    system_message = """You will be given a user query within the <query> tag, and multiple places within the <places> tag. 
+    You need to rank the places based on how well they match the user query. 
+    Each place will be contained within a <place> tag.
+    You are to return a well formatted json object, with a "places" list containing: place_id, description, and a score.
+    The place_id should be the place_id of the place, the description should be a short description of why the the place would be interesting for the user, and the score should be a number between 0 and 1, with 1 being the best match and 0 being the worst match.
+    Example response:
+    {
+        "places": [
+            {"place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4", "description": "This coffee shop has a high rating, and is close to your areas of interest.", "score": 0.9},
+            {"place_id": "ChIJF1k2tdXOsGoRKq4uZzLQMtg", "description": "This musuem is open now. The 5-floor building is devoted to natural history artifacts which you mentioned you liked", "score": 0.9},
+        ]
+    }
+    """
+    template_place_string = "<place id={id}> <name>{name}</name> <description>{description}</description> <rating>{rating}</rating> <num_ratings>{num_ratings}</num_ratings></place>"
+    places = "\n".join([template_place_string.format(id=place['id'], name=place['name'], description=place['description'], rating=place['rating'], num_ratings=place['numRatings']) for place in places])
+    user_query = "<query>{query}</query>\n<places>{places}</places>".format(query=query, places=places)
+    messages = [
+        {"role": "system", "content": system_message},
+        {"role": "user", "content": user_query}
+    ]
+    response = openai.ChatCompletion.create(
+        engine="gpt-4",
+        messages = messages,
+        temperature=0.7,
+        max_tokens=800,
+        top_p=0.95,
+        frequency_penalty=0,
+        presence_penalty=0,
+        stop=None
+    )
+    rankings = response.choices[0].message['content']
+    try:
+        result = json.loads(rankings)
+        sorted_places = sorted(result["places"], key=lambda x: x["score"], reverse=True)
+    except:
+        sorted_places = [] # case when json object fails to parse
+    return sorted_places
+
+
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
 @app.route(route="places", methods=["GET"])
@@ -66,9 +106,9 @@ def Places(req: func.HttpRequest) -> func.HttpResponse:
     
     # get locked places
     try:
-        locked_places = req.get_json()
+        req_body = req.get_json()
     except ValueError:
-        pass
+        locked_places = []
     else:
         locked_places = req_body.get('locked_places',[])
     
@@ -80,10 +120,10 @@ def Places(req: func.HttpRequest) -> func.HttpResponse:
         
 
         # Add locked places to place list
-        # if len(locked_places)>0:
-        #     locked_places.sort(key=lambda x: x[1])
-        #     for place_id, idx in locked_places:
-        #         places.insert(idx, (place_id, "No name stored"))
+        if len(locked_places)>0:
+            locked_places.sort(key=lambda x: x[1])
+            for place_id, idx in locked_places:
+                places.insert(idx, (place_id, "No name stored"))
         places = places[:limit] # TODO there is an edge case here where a locked card could have a higher index than the limit and be excluded
 
         place_objects: List[Place] = [get_place_object(place).to_dict() for place in places]

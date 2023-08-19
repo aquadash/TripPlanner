@@ -40,7 +40,7 @@ class Place:
     def from_json(cls, place_result: dict):
         return cls(id=place_result.get("place_id", None),
                  name = place_result.get("name", None),
-                 description=place_result.get("editorial_summary",{}).get('overview',{}),
+                 description=place_result.get("editorial_summary",{}).get('overview',None),
                  address=place_result.get("formatted_address"),
                  location=place_result.get("geometry",{}).get("location",{}),
                  imageReference=place_result.get("photos",[{}])[0].get("photo_reference",None),
