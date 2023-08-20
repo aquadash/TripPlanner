@@ -1,10 +1,11 @@
 import azure.functions as func
 import logging
 import json
+import random
 from typing import List
 import os
 import openai
-from AzureFunction.places import get_place_object, get_location_from_query, get_places_from_query, Place
+from places import get_place_object, get_location_from_query, get_places_from_query, Place
 
 openai.api_type = "azure"
 openai.api_base = os.getenv("AZURE_OAI_ENDPOINT")
@@ -15,7 +16,7 @@ def get_entities(query):
 
     user_input = query
     #system_msg = "A user will tell you where they want to go (geographical location), what accessibility requirements they have and what they want to do (in free text form). You need to extract the geographic location, activites and accessibility requirements (they might give multiple places, activities or accessibility requirements. Extract all of those, no hyphens, and return only one key word for each, e.g. wheelchair instead of wheelchair access. Also make all words singular form.) from user-entered text. Return those as json"
-    system_msg = "You will be given a free text query from a user, containing information about their geographic location, what they are interested in doing in this location, and their accessibility requirements. You need to extract the geographic location, activities and accessibility requirements from the user-entered text. Return those as a well formatted json object, with the following keys: location, interests, accessibility_requirements."
+    system_msg = "You will be given a free text query from a user, containing information about their geographic location, what they are interested in doing in this location, and if they have a wheelchair accessibility requirement. You need to extract the geographic location, activities and accessibility requirements from the user-entered text. Return those as a well formatted json object, with the following keys: location, interests, wheelchair_accessibility_requirements. wheelchair_accessibility_requirements should be a boolean value"
     messages = [
         {"role": "system", "content": system_msg},
         {"role": "user", "content": user_input}
@@ -82,6 +83,10 @@ def Places(req: func.HttpRequest) -> func.HttpResponse:
 
     # get query
     query = req.params.get('query')
+    try:
+        retry = int(req.params.get('retry'))
+    except:
+        retry = 0
     if not query:
         try:
             req_body = req.get_json()
@@ -98,13 +103,14 @@ def Places(req: func.HttpRequest) -> func.HttpResponse:
         except ValueError:
             pass
         else:
-            limit = req_body.get('limit',10)
+            limit = req_body.get('limit',5)
     try:
         limit = int(limit)
     except:
-        limit = 10
+        limit = 5
     
     # get locked places
+    locked_places = []
     try:
         req_body = req.get_json()
     except ValueError:
@@ -114,56 +120,57 @@ def Places(req: func.HttpRequest) -> func.HttpResponse:
     
     
     if query:
-        entities = get_entities(query)
-        location: dict = get_location_from_query(entities["location"])
-        places: List[str] = get_places_from_query(entities["interests"], location)
-        
-
-        # Add locked places to place list
-        if len(locked_places)>0:
-            locked_place_objects = [get_place_object(place).to_dict() for place in locked_places]
-            locked_places.sort(key=lambda x: x[1])
-            for place_id, idx in locked_places:
-                places.insert(idx, (place_id, "No name stored"))
-        #places = places[:limit] # TODO there is an edge case here where a locked card could have a higher index than the limit and be excluded
-
-        place_objects: List[Place] = [get_place_object(place).to_dict() for place in places]
-
-        # rank places
-        ranked_places = rank_places(query, place_objects)
-
-        for place in ranked_places:
-            place_object = next((x for x in place_objects if x["id"] == place["place_id"]), None)
-            if place_object:
-                place_object["score"] = place["score"] # add score to place object
-                place_object["description"] = place["description"] # give a custom description
+        try:
+            entities:dict = get_entities(query)
+            if not entities.get("location"):
+                # set to adelaide if no location given
+                location = {'lat': -34.9284989, 'lng': 138.6007456}
             else:
-                print("Place not found")
-                pass
-        
-        place_objects.sort(key=lambda x: x["score"], reverse=True)
-        place_objects = place_objects[:limit]
-        # 1. process query
-        # 1.1 Open AI query - get location, interests, etc.
+                location: dict = get_location_from_query(entities["location"])
+            places: List[str] = get_places_from_query(entities["interests"], location)
 
-        # 2. Search for places
-        # 2.1 Call places API with search parameters
-        # 2.2 Get places from API
-        # 2.3 Look for places from other data sources?
+            # Add locked places to place list
+            # if locked_places and len(locked_places)>0:
+            #     locked_place_objects = [get_place_object(place).to_dict() for place in locked_places]
+            # else:
+            #     locked_place_objects = []
+            # #places = places[:limit] # TODO there is an edge case here where a locked card could have a higher index than the limit and be excluded
 
-        # 3. Filter places based on query
-        # not sure the best way to do this 
+            place_objects: List[Place] = [get_place_object(place).to_dict() for place in places]
 
-        # 4. Format and return places
-        # 4.1 Call place details API for filtered places to get more details
-        # 4.2 Format places into places class (needs modification, it's above)
-        # 4.3 Return places as JSON
-        # print(get_entities(query))
-        return_object = {
-            "description": "This is a summary of the results",
-            "places": place_objects, 
-        }
-        return func.HttpResponse(json.dumps(return_object), mimetype="application/json",status_code=200)
+            # ensure wheelchair accessibility
+            if entities["wheelchair_accessibility_requirements"]:
+                place_objects = [place for place in place_objects if place["wheelchair_accessible_entrance"] == True]
+
+            # rank places
+            if retry == 1:
+                place_objects = place_objects[5:10]
+            else:
+                place_objects = place_objects[:limit]
+            ranked_places = rank_places(query, place_objects)
+            for place in ranked_places:
+                place_object = next((x for x in place_objects if x["id"] == place["place_id"]), None)
+                if place_object:
+                    place_object["score"] = place["score"] # add score to place object
+                    place_object["description"] = place["description"] # give a custom description
+                else:
+                    logging.info(f"Place not found. {place['place_id']}")
+            
+            place_objects.sort(key=lambda x: x["score"], reverse=True)
+
+            return_object = {
+                "description": "This is a summary of the results",
+                "places": place_objects[:limit],
+                "ranked_places": ranked_places,
+                "retry": retry,
+            }
+            return func.HttpResponse(json.dumps(return_object), mimetype="application/json",status_code=200)
+        except Exception as e:
+            logging.error(e)
+            return func.HttpResponse(
+                 f"Error: {e}",
+                 status_code=400
+            )
     else:
         return func.HttpResponse(
              "Please pass a query on the query string or in the request body. Example: govhack-tripplanner.azurewebsites.net/api/places?query='test'",

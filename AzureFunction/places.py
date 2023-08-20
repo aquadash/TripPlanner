@@ -1,12 +1,19 @@
 import os
 import requests
 import json
+import random
 from dotenv import load_dotenv
 from typing import Optional, List, Union
 
 load_dotenv()
 
 maps_key = os.getenv("GOOGLE_MAPS_API_KEY")
+
+sample_images = ["https://assets3.thrillist.com/v1/image/2875152/1200x630/flatten;crop_down;webp=auto;jpeg_quality=70",
+                "https://www.worldatlas.com/r/w768/upload/6d/a6/c0/shutterstock-1905131839.jpg",
+                "https://media.istockphoto.com/id/1066998508/photo/sydney-harbour-bridge.jpg?s=612x612&w=0&k=20&c=kYUUMFq6QD9p5dT7BZ2E4OoMMw6lIJCr1DMmZlihuX4=,"
+                "https://www.qantas.com/content/travelinsider/en/explore/australia/natural-landmarks-uluru-great-barrier-reef-australia-more/jcr:content/verticalGalleryMain/gallery/galleryItems/969_1688960616387.img.480.medium.jpg/1689042657569.jpg"]
+
 
 fields_places = "business_status,place_id,name,formatted_address,editorial_summary,formatted_phone_number,geometry,photos,price_level,rating,types,website,wheelchair_accessible_entrance,user_ratings_total,opening_hours"
 
@@ -43,7 +50,7 @@ class Place:
                  description=place_result.get("editorial_summary",{}).get('overview',None),
                  address=place_result.get("formatted_address"),
                  location=place_result.get("geometry",{}).get("location",{}),
-                 imageReference=place_result.get("photos",[{}])[0].get("photo_reference",None),
+                 imageReference= random.choice(sample_images), # add a sample image lol
                  phone=place_result.get("formatted_phone_number",None),
                  wheelchair_accessible_entrance=place_result.get("wheelchair_accessible_entrance",None),
                  priciness=place_result.get("price_level",None),
@@ -88,6 +95,8 @@ def get_place_object(place_result: tuple):
 def get_places_from_query(query: Union[str, List[str]], location: Optional[dict]):
     if isinstance(query, list):
         query = "+".join(query)
+    elif not query:
+        query = "fun things to do"
     if location:
         query += f"&location={location['lat']}%2C{location['lng']}"
     #return query
@@ -96,4 +105,6 @@ def get_places_from_query(query: Union[str, List[str]], location: Optional[dict]
                                                      ).json()
     if response.get("status") == "OK":
         places = response["results"]
-    return [(place['place_id'],place['name']) for place in places if place['rating'] > 3.0] # hardcoded rating limit lol (place["place_id"], place['name'])
+        return [(place['place_id'],place['name']) for place in places if place['rating'] > 3.0] 
+    else:
+        return []
