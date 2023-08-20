@@ -15,7 +15,8 @@ TourMate is a revolutionary travel planning application that utilizes the power 
 ## Key Features
 
 - **Personalized Itinerary Generation:** TourMate enables users to describe their desired travel activities, interests, and accessibility needs using free text. The AI-driven platform then generates tailored recommendations based on these inputs, taking into account accessibility requirements, budget, and preferences.
-  Seamless Integration: Unlike traditional travel planning that requires toggling between various platforms, TourMate combines essential functions like location searches, reviews, recommendations, curated lists, and contact details in one place. This integration simplifies the planning process and minimizes user frustration.
+
+- **Seamless Integration:** Unlike traditional travel planning that requires toggling between various platforms, TourMate combines essential functions like location searches, reviews, recommendations, curated lists, and contact details in one place. This integration simplifies the planning process and minimizes user frustration.
 
 - **Accessibility Focus:** Recognizing the challenges faced by travelers with accessibility requirements, TourMate places a strong emphasis on catering to their needs. The app considers factors such as wheelchair access and suggests places that align with the user's desired activities while ensuring their comfort and inclusivity.
 
