@@ -25,6 +25,7 @@ export interface Place {
   status: string;
   website: string;
   types: string[];
+  keyword: string;
 }
 
 interface ApiResponse {

@@ -17,22 +17,24 @@ const Card: React.FC<CardProps> = ({ place, onSelect, index }) => {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={() => onSelect(place.id)}
+          className="hover:shadow-md"
           // className="h-48 cursor-pointer hover:shadow-lg flex flex-col items-end bg-white rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 scale-95 hover:scale-100 ease-in-out duration-100"
         >
+          {place.keyword && (
+            <div className="absolute m-1 align-top flex">
+              <span className="bg-green-100 font-mono text-green-800 text-sm font-semibold px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">
+                {place.keyword || "For You"}
+              </span>
+            </div>
+          )}
           <div
             style={{
               backgroundImage: `url(${place.imageReference})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
-            className="h-48 flex flex-col hover:shadow-md items-end bg-white rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
+            className="h-48 flex flex-col items-end bg-white rounded-lg shadow md:flex-row md:max-w-xl"
           >
-            {/* <div>
-        <span className="bg-green-100 font-mono text-green-800 text-sm font-semibold mr-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">
-          For You
-        </span>
-      </div> */}
-
             <div className="bg-slate-200 text-[#0393A1] text-left font-mono font-thin p-1 rounded-tr-md rounded-bl-md flex-col">
               <span className="font-semibold">{place.name}</span>
 

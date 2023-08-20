@@ -53,7 +53,7 @@ const Column: React.FC<ColumnProps> = ({
                 />
               ))}
               {onGetMore && (
-                <LoadMore index={list.length} onSelect={onGetMore} />
+                <LoadMore index={list.length + 1} onSelect={onGetMore} />
               )}
             </>
           )}
