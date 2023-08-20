@@ -50,7 +50,7 @@ def rank_places(query:str, places: List[Place]):
     """
     template_place_string = "<place id={id}> <name>{name}</name> <description>{description}</description> <rating>{rating}</rating> <num_ratings>{num_ratings}</num_ratings></place>"
     places = "\n".join([template_place_string.format(id=place['id'], name=place['name'], description=place['description'], rating=place['rating'], num_ratings=place['numRatings']) for place in places])
-    user_query = "<query>{query}</query>\n<places>{places}</places>".format(query=query, places=places)
+    user_query = "g<query>{query}</query>\n<places>{places}</places>".format(query=query, places=places)
     messages = [
         {"role": "system", "content": system_message},
         {"role": "user", "content": user_query}
@@ -73,6 +73,61 @@ def rank_places(query:str, places: List[Place]):
         sorted_places = [] # case when json object fails to parse
     return sorted_places
 
+def write_itinerary_description(place_names_list):
+    system_message = """ 
+    You will be given a list of places, which is an itinerary that was put together for a user.
+    You need to write a sentence with the itinerary description using the list of places. You do not know anything about these places. The user will not necessarily be visiting the places in that order.
+    You are to return the description as a string.
+    """
+    #user_query = "g<query>{query}</query>\n<places>{places}</places>".format(query=query, places=place_names_list)
+
+    messages = [
+        {"role": "system", "content": system_message},
+        {"role": "user", "content":  ",".join(place_names_list)}
+    ]
+    response = openai.ChatCompletion.create(
+        engine="gpt-4",
+        messages = messages,
+        temperature=0.5,
+        max_tokens=800,
+        top_p=0.95,
+        frequency_penalty=0,
+        presence_penalty=0,
+        stop=None
+    )
+    return response.choices[0].message['content']
+
+
+def get_place_keyword(places, query):
+    system_message = """ 
+    You will be given a string with a request a user has put in that describes what they want to do during their visit to a city. 
+    You will also be given string of comma-separated place descriptions. The places make up the itinerary that I am going to recommend to the user.
+    I need you to summarise the itinerary that I am going to suggest to the user one positively-charged word, to get the user excited about the itinerary.
+    Use the places' descriptions to come up with the word and try to align the word to what the user wanted based on their request. Ignore accessibility-related requirements.
+    
+    """
+
+    descriptions = [place["description"] for place in places["places"]]
+    descriptions_str = ",".join(descriptions)
+
+
+    user_query = "g<query>{query}</query>\n<places>{places}</places>".format(query=query, places=descriptions_str)
+
+    messages = [
+        {"role": "system", "content": system_message},
+        {"role": "user", "content":  user_query}
+    ]
+    response = openai.ChatCompletion.create(
+        engine="gpt-4",
+        messages = messages,
+        temperature=0.6,
+        max_tokens=800,
+        top_p=0.95,
+        frequency_penalty=0,
+        presence_penalty=0,
+        stop=None
+    )
+    return response.choices[0].message['content']
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
