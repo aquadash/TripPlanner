@@ -89,57 +89,6 @@ const Map: React.FC<MapProps> = (props) => {
       const origin = place.location;
       const nextDestination = nextPlace.location;
 
-      // For the first marker, connect it to the next marker and the deployment location
-      // if (i === 0) {
-      //   polylinesArray.push(
-      //     <Polyline
-      //       key={`polyline-${i}`}
-      //       path={[origin, nextDestination]}
-      //       options={MAP_SETTINGS.POLYLINE_OPTIONS.REGULAR}
-      //     />
-      //   );
-      //   polylinesArray.push(
-      //     <Polyline
-      //       key={`polyline-${i}-to-deployment`}
-      //       path={[
-      //         {
-      //           lat: Number(drifts[0].DeploymentLat),
-      //           lng: Number(drifts[0].DeploymentLon),
-      //         },
-      //         origin,
-      //       ]}
-      //       options={MAP_SETTINGS.POLYLINE_OPTIONS.REGULAR}
-      //     />
-      //   );
-      // }
-
-      // For the last marker, connect it to the previous marker and the deployment location
-      // if (i === numDrifts - 1) {
-      //   polylinesArray.push(
-      //     <Polyline
-      //       key={`polyline-${i}-to-previous`}
-      //       path={[origin, prevDestination]}
-      //       options={MAP_SETTINGS.POLYLINE_OPTIONS.REGULAR}
-      //     />
-      //   );
-      //   if (numDrifts > 1) {
-      //     polylinesArray.push(
-      //       <Polyline
-      //         key={`polyline-${i}-to-deployment`}
-      //         path={[
-      //           origin,
-      //           {
-      //             lat: Number(drifts[0].DeploymentLat),
-      //             lng: Number(drifts[0].DeploymentLon),
-      //           },
-      //         ]}
-      //         options={MAP_SETTINGS.POLYLINE_OPTIONS.DASHED}
-      //       />
-      //     );
-      //   }
-      // }
-
-      // if (i >= 0 && i < numDrifts) {
       polylinesArray.push(
         <Polyline
           key={`polyline-${i}`}
@@ -148,8 +97,6 @@ const Map: React.FC<MapProps> = (props) => {
         />
       );
       <DistanceInfo key={`info-${i}`} from={place} to={nextPlace} />;
-
-      // }
     }
 
     return polylinesArray;

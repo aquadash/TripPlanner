@@ -148,7 +148,7 @@ function App() {
     async (query: any, retry?: number) => {
       setIsLoading(true);
       fetch(
-        `https://govhack-tripplanner.azurewebsites.net/api/places?query='${query}'&retry=${retry}`
+        `https://govhack-tripplanner.azurewebsites.net/api/places?query='${query}'&retry=${retry}&limit=5`
       )
         .then((response) => response.json())
         .then(async (data: ApiResponse) => {

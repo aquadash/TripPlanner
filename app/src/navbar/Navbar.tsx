@@ -4,8 +4,8 @@ const Navbar = () => {
       <div className="max-w-screen-2xl flex flex-wrap items-center justify-between mx-auto p-4">
         <a href="/" className="flex items-center">
           <img src="TripPlanner.png" className="h-8 mr-3" alt="Flowbite Logo" />
-          <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
-            Trip Planner
+          <span className="self-center text-2xl font-mono font-semibold whitespace-nowrap dark:text-white">
+            TourMate
           </span>
         </a>
         <button
