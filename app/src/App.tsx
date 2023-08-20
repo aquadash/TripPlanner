@@ -25,6 +25,7 @@ export interface Place {
   status: string;
   website: string;
   types: string[];
+  keyword: string;
 }
 
 interface ApiResponse {
@@ -183,7 +184,7 @@ function App() {
     <DragDropContext onDragEnd={onDragEnd}>
       <Navbar />
       <SearchBar sendQuery={onGetResults} />
-      <div className="App grid grid-cols-3 gap-4">
+      <div className="App grid grid-cols-2 lg:grid-cols-3 gap-4">
         <div>
           <h2 className="font-mono font-semibold">{columns.new.title}</h2>
           <Column
@@ -203,7 +204,7 @@ function App() {
           <Column col={columns.itinerary} />
         </div>
 
-        <div>
+        <div className="md:block hidden">
           <h2 className="font-mono font-semibold mb-2">Where is it?</h2>
           <Map
             places={columns.itinerary.list}
