@@ -7,6 +7,8 @@ import openai
 from dotenv import load_dotenv
 load_dotenv()
 
+import aoaidata
+
 openai.api_type = "azure"
 openai.api_base = os.getenv("AZURE_OAI_ENDPOINT")
 openai.api_version = "2023-05-15"
@@ -79,10 +81,10 @@ def get_sample_data():
         places.append(Place.from_json(place).to_dict())
     return places
 
-def get_entities(query):
+def get_entities(query, sysms):
 
     user_input = query
-    system_msg = "A user will tell you where they want to go (geographical location), what accessibility requirements they have and what they want to do (in free text form). You need to extract place, activites and accessibility requirements (they might give multiple places, activities or accessibility requirements. Extract all of those, no hyphens, and return only one key word for each, e.g. wheelchair instead of wheelchair access. Also make all words singular form.) from user-entered text. Return those as json"
+    system_msg = sysms
 
     messages = [
         {"role": "system", "content": system_msg},
@@ -99,19 +101,9 @@ def get_entities(query):
     presence_penalty=0,
     stop=None)
 
-    response = openai.ChatCompletion.create(
-        engine="gpt-4",
-        messages = messages,
-        temperature=0.7,
-        max_tokens=800,
-        top_p=0.95,
-        frequency_penalty=0,
-        presence_penalty=0,
-        stop=None
-    )
     extracted_activities = response.choices[0].message['content']
 
-    return "User says: "+"\n"+"Output: "+extracted_activities+"\n"
+    return extracted_activities
         
 
 @app.route(route="places", methods=["GET"])
@@ -144,8 +136,13 @@ def Places(req: func.HttpRequest) -> func.HttpResponse:
         # 4.2 Format places into places class (needs modification, it's above)
         # 4.3 Return places as JSON
         # print(get_entities(query))
+        entities = get_entities(query, "A user will tell you where they want to go (geographical location), what accessibility requirements they have and what they want to do (in free text form). You need to extract places, activites and accessibility requirements (they might give multiple places, activities or accessibility requirements. Extract all of those, no hyphens, and return only one key word for each, e.g. wheelchair instead of wheelchair access. Also make all words singular form.) from user-entered text. Return those as json")
+        ragsearch = aoaidata.conversation_with_data(query, entities)
+        recommendations = ragsearch.get('choices')[0].get('messages')[1].get('content')
+        finalrec = get_entities("Extract top 5 places from each list and return as a non-numbered list. Choose a diverse set and respond with the list and nothing else", recommendations)
         return_object = {
-        "extracted_oai": get_entities(query),
+        "oai": finalrec,    
+        "extracted_oai": entities,
         "places": get_sample_data()
         }
         return func.HttpResponse(json.dumps(return_object), mimetype="application/json",status_code=200)
