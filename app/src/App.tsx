@@ -184,19 +184,27 @@ function App() {
       <Navbar />
       <SearchBar sendQuery={onGetResults} />
       <div className="App grid grid-cols-3 gap-4">
-        <Column
-          loading={isLoading}
-          col={columns.new}
-          description={
-            description !== "" && columns.new.list.length > 0
-              ? description
-              : undefined
-          }
-          onGetMore={handleGetMore}
-        />
-        <Column col={columns.itinerary} />
+        <div>
+          <h2 className="font-mono font-semibold">{columns.new.title}</h2>
+          <Column
+            loading={isLoading}
+            col={columns.new}
+            description={
+              description !== "" && columns.new.list.length > 0
+                ? description
+                : undefined
+            }
+            onGetMore={handleGetMore}
+          />
+        </div>
 
-        <div className="">
+        <div>
+          <h2 className="font-mono font-semibold">{columns.itinerary.title}</h2>
+          <Column col={columns.itinerary} />
+        </div>
+
+        <div>
+          <h2 className="font-mono font-semibold mb-2">Where is it?</h2>
           <Map
             places={columns.itinerary.list}
             goto={selected}
