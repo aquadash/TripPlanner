@@ -184,7 +184,7 @@ const Map: React.FC<MapProps> = (props) => {
               lng: Number(attraction.location.lng),
             }}
             icon={{
-              url: `warning-marker.png`,
+              url: `heart-marker.png`,
               scale: 1,
               scaledSize: new google.maps.Size(38, 38),
             }}
