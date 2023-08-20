@@ -26,9 +26,8 @@ def format_as_ndjson(obj: dict) -> str:
     return json.dumps(obj, ensure_ascii=False) + "\n"
 
 
-def prepare_body_headers_with_data(request, entities):
+def prepare_body_headers_with_data(request):
     # request_messages = request.json["messages"]
-    logging.info((list(entities))[0])
     user_input = request
     system_msg = "Extract places from user query and recommend places to go using datasets and return those as json. structure as a non-numbered list of maximum 5 for each place"
 
@@ -61,8 +60,8 @@ def prepare_body_headers_with_data(request, entities):
     return body, headers
 
 
-def conversation_with_data(request, entities):
-    body, headers = prepare_body_headers_with_data(request, entities)
+def conversation_with_data(request):
+    body, headers = prepare_body_headers_with_data(request)
     endpoint = f"https://{AZURE_OPENAI_RESOURCE}.openai.azure.com/openai/deployments/{AZURE_OPENAI_MODEL}/extensions/chat/completions?api-version={AZURE_OPENAI_PREVIEW_API_VERSION}"
     
     

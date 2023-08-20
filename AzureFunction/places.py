@@ -92,7 +92,7 @@ def get_place_object(place_result: tuple):
     return Place.from_json(place_result)
 
 
-def get_places_from_query(query: Union[str, List[str]], location: Optional[dict]):
+def get_places_from_query(query: Union[str, List[str]], location: Optional[dict] = None):
     if isinstance(query, list):
         query = "+".join(query)
     elif not query:

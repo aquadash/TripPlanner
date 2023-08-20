@@ -121,7 +121,6 @@ def Places(req: func.HttpRequest) -> func.HttpResponse:
     
     if query:
         try:
-          
             system_msg_query = "You will be given a free text query from a user, containing information about their geographic location, what they are interested in doing in this location, and if they have a wheelchair accessibility requirement. You need to extract the geographic location, activities and accessibility requirements from the user-entered text. Return those as a well formatted json object, with the following keys: location, interests, wheelchair_accessibility_requirements. wheelchair_accessibility_requirements should be a boolean value"
             entities:dict = get_entities(query, system_msg_query)
             if not entities.get("location"):
@@ -131,17 +130,13 @@ def Places(req: func.HttpRequest) -> func.HttpResponse:
                 location: dict = get_location_from_query(entities["location"])
             places: List[str] = get_places_from_query(entities["interests"], location)
               # jostep stuff - fix and intergreate
-              #ragsearch = aoaidata.conversation_with_data(query, entities)
-              #   recommendations = ragsearch.get('choices')[0].get('messages')[1].get('content')
-              #   finalrec = get_entities("Extract top 5 places from each list and return as a non-numbered list. Choose a diverse set and respond with the list and nothing else", recommendations)
-
-            # Add locked places to place list
-            # if locked_places and len(locked_places)>0:
-            #     locked_place_objects = [get_place_object(place).to_dict() for place in locked_places]
-            # else:
-            #     locked_place_objects = []
-            # #places = places[:limit] # TODO there is an edge case here where a locked card could have a higher index than the limit and be excluded
-
+            ragsearch = aoaidata.conversation_with_data(query)
+            recommendations = ragsearch.get('choices')[0].get('messages',[])[1].get('content',None)
+            if not recommendations:
+                cog_search_places = get_entities(query=recommendations, sysms="You will be given free text suggestions of places to visit. Extract two of these, and return as a json object with the key place_name, and location (for the city/locale)")
+                for cs_place in cog_search_places:
+                    places.insert(0, get_places_from_query(f"{cs_place['place_name']} {cs_place['location']}"))
+            
             place_objects: List[Place] = [get_place_object(place).to_dict() for place in places]
 
             # ensure wheelchair accessibility
