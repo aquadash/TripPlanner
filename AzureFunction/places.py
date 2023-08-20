@@ -11,7 +11,7 @@ maps_key = os.getenv("GOOGLE_MAPS_API_KEY")
 
 sample_images = ["https://assets3.thrillist.com/v1/image/2875152/1200x630/flatten;crop_down;webp=auto;jpeg_quality=70",
                 "https://www.worldatlas.com/r/w768/upload/6d/a6/c0/shutterstock-1905131839.jpg",
-                "https://media.istockphoto.com/id/1066998508/photo/sydney-harbour-bridge.jpg?s=612x612&w=0&k=20&c=kYUUMFq6QD9p5dT7BZ2E4OoMMw6lIJCr1DMmZlihuX4=,"
+                "https://media.istockphoto.com/id/1066998508/photo/sydney-harbour-bridge.jpg?s=612x612&w=0&k=20&c=kYUUMFq6QD9p5dT7BZ2E4OoMMw6lIJCr1DMmZlihuX4=",
                 "https://www.qantas.com/content/travelinsider/en/explore/australia/natural-landmarks-uluru-great-barrier-reef-australia-more/jcr:content/verticalGalleryMain/gallery/galleryItems/969_1688960616387.img.480.medium.jpg/1689042657569.jpg"]
 
 

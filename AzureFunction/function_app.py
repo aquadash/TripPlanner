@@ -14,6 +14,29 @@ openai.api_base = os.getenv("AZURE_OAI_ENDPOINT")
 openai.api_version = "2023-05-15"
 openai.api_key = os.getenv("AZURE_OAI_KEY")
 
+def write_itinerary_description(place_names_list):
+    system_message = """ 
+    You will be given a list of places, which is an itinerary that was put together for a user.
+    You need to write a 3 sentence summary, creating a fun itinerary description using the list of places. You do not know anything about these places. The user will not necessarily be visiting the places in that order.
+    You are to return the description as a string.
+    """
+
+    messages = [
+        {"role": "system", "content": system_message},
+        {"role": "user", "content":  ",".join(place_names_list)}
+    ]
+    response = openai.ChatCompletion.create(
+        engine="gpt-4",
+        messages = messages,
+        temperature=0.5,
+        max_tokens=800,
+        top_p=0.95,
+        frequency_penalty=0,
+        presence_penalty=0,
+        stop=None
+    )
+    return response.choices[0].message['content']
+
 def get_entities(query, sysms):
 
     user_input = query
@@ -39,13 +62,14 @@ def rank_places(query:str, places: List[Place]):
     system_message = """You will be given a user query within the <query> tag, and multiple places within the <places> tag. 
     You need to rank the places based on how well they match the user query. 
     Each place will be contained within a <place> tag.
-    You are to return a well formatted json object, with a "places" list containing: place_id, description, and a score.
+    You are to return a well formatted json object, with a "places" list containing: place_id, description, keyword and a score.
+    I need you to summarise the itinerary that I am going to suggest to the user one positively-charged word, to get the user excited about the place. Use the places' descriptions to come up with the word and try to align the word to what the user wanted based on their request. Ignore accessibility-related requirements. This will be the "keyword" key on the returned object.
     The place_id should be the place_id of the place, the description should be a short description of why the the place would be interesting for the user, and the score should be a number between 0 and 1, with 1 being the best match and 0 being the worst match.
     Example response:
     {
         "places": [
-            {"place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4", "description": "This coffee shop has a high rating, and is close to your areas of interest.", "score": 0.9},
-            {"place_id": "ChIJF1k2tdXOsGoRKq4uZzLQMtg", "description": "This musuem is open now. The 5-floor building is devoted to natural history artifacts which you mentioned you liked", "score": 0.9},
+            {"place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4", "description": "This coffee shop has a high rating, and is close to your areas of interest.", "keyword": "Caffeinate!","score": 0.9},
+            {"place_id": "ChIJF1k2tdXOsGoRKq4uZzLQMtg", "description": "This musuem is open now. The 5-floor building is devoted to natural history artifacts which you mentioned you liked", "keyword": "Explore!", "score": 0.9},
         ]
     }
     """
@@ -154,13 +178,18 @@ def Places(req: func.HttpRequest) -> func.HttpResponse:
                 if place_object:
                     place_object["score"] = place["score"] # add score to place object
                     place_object["description"] = place["description"] # give a custom description
+                    place_object["keyword"] = place["keyword"] # give a custom description
                 else:
                     logging.info(f"Place not found. {place['place_id']}")
             
             place_objects.sort(key=lambda x: x["score"], reverse=True)
 
+            # generate itinerary description
+            place_names_list = [place['name'] for place in place_objects]
+            itinerary_description = write_itinerary_description(place_names_list)
+
             return_object = {
-                "description": "This is a summary of the results",
+                "description": itinerary_description,
                 "places": place_objects[:limit],
                 "ranked_places": ranked_places,
                 "retry": retry,
