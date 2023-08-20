@@ -35,7 +35,7 @@ def write_itinerary_description(place_names_list):
         presence_penalty=0,
         stop=None
     )
-    return response.choices[0].message['content']
+    return response.choices[0].message['content'].replace('"',"")
 
 def get_entities(query, sysms):
 
