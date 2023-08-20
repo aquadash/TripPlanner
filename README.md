@@ -1,6 +1,7 @@
 # Introducing: TourMate!
 
 AI-Powered Personalized Travel Itinerary App (a GovHack 2023 Project)
+
 👉🏻 Create your perfect itinerary: [Visit TourMate](https://jolly-plant-097596f1e.3.azurestaticapps.net)
 
 > Note: there is a bit of latency on the API calls, so please be patient when using the app 😅
