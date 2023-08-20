@@ -2,7 +2,6 @@ import { useCallback, useState } from "react";
 import { DragDropContext, DropResult } from "react-beautiful-dnd";
 import "./App.css";
 import Column from "./Column";
-import Loader from "./loader/Loader";
 import Map from "./map/Map";
 import Navbar from "./navbar/Navbar";
 import SearchBar from "./search/SearchBar";
@@ -144,14 +143,6 @@ function App() {
     }
   };
 
-  const getImageUrl = useCallback(async (ref: string) => {
-    fetch(
-      `https://maps.google.com/maps/api/place/photo?maxwidth=400&photo_reference=${ref}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`
-    )
-      .then((response) => response.json())
-      .then((data) => console.log(data));
-  }, []);
-
   const onGetResults = useCallback(
     async (query: any, retry?: number) => {
       setIsLoading(true);
@@ -160,7 +151,6 @@ function App() {
       )
         .then((response) => response.json())
         .then(async (data: ApiResponse) => {
-          // await getImageUrl(data.places[0].imageReference);
           setDescription(data.description);
           const deDuplicatedPlaces = data.places.filter(
             (place: Place) =>
@@ -197,7 +187,12 @@ function App() {
         <Column
           loading={isLoading}
           col={columns.new}
-          onGetMore={columns.new.list.length > 0 ? handleGetMore : undefined}
+          description={
+            description !== "" && columns.new.list.length > 0
+              ? description
+              : undefined
+          }
+          onGetMore={handleGetMore}
         />
         <Column col={columns.itinerary} />
 

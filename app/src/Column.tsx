@@ -1,8 +1,9 @@
 import { Droppable } from "react-beautiful-dnd";
 import { Place } from "./App";
-import Card from "./places/Card";
-import LoadMore from "./places/LoadMore";
 import Loader from "./loader/Loader";
+import Card from "./places/Card";
+import Description from "./places/Description";
+import LoadMore from "./places/LoadMore";
 
 interface ColumnProps {
   col: {
@@ -11,12 +12,14 @@ interface ColumnProps {
     list: Place[];
   };
   loading?: boolean;
+  description?: string;
   onGetMore?(): void;
 }
 
 const Column: React.FC<ColumnProps> = ({
   col: { id, title, list },
   loading = false,
+  description,
   onGetMore,
 }) => {
   return (
@@ -40,6 +43,7 @@ const Column: React.FC<ColumnProps> = ({
             <Loader />
           ) : (
             <>
+              {description && <Description text={description} index={-1} />}
               {list.map((place, index) => (
                 <Card
                   key={place.id}
