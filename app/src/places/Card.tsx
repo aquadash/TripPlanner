@@ -72,17 +72,31 @@ const Card: React.FC<CardProps> = ({ place, onSelect, index }) => {
             </div>
             <div className="absolute inset-0 h-full w-full rounded-xl bg-black/80 px-12 text-center text-slate-200 [transform:rotateY(180deg)] [backface-visibility:hidden]">
               <div className="flex min-h-full flex-col items-center justify-center">
-                <h1 className="text-lg font-bold">{place.name}</h1>
-                <p className="text-sm">{place.phone}</p>
+                <h2 className="text-md font-bold -mb-2">{place.name}</h2>
+                {/* <p className="text-sm">{place.phone}</p> */}
                 <p className="text-base mt-4">{place.description}</p>
-                {place.website && (
-                  <a
-                    href={place.website}
-                    className="mt-2 cursor-pointer rounded-md bg-neutral-800 px-2 py-1 text-sm hover:bg-neutral-900"
-                  >
-                    Visit Website
-                  </a>
-                )}
+                <div className="flex flex-row gap-2">
+                  {place.website && (
+                    <a
+                      href={place.website}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-2 cursor-pointer rounded-md bg-neutral-800 px-2 py-1 text-sm hover:bg-neutral-900"
+                    >
+                      Visit Website
+                    </a>
+                  )}
+                  {place.phone && (
+                    <a
+                      href={`tel:${place.phone}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-2 cursor-pointer rounded-md bg-neutral-800 px-2 py-1 text-sm hover:bg-neutral-900"
+                    >
+                      Call: {place.phone}
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           </div>
