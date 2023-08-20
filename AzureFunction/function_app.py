@@ -7,16 +7,17 @@ import os
 import openai
 from places import get_place_object, get_location_from_query, get_places_from_query, Place
 
+import aoaidata
+
 openai.api_type = "azure"
 openai.api_base = os.getenv("AZURE_OAI_ENDPOINT")
 openai.api_version = "2023-05-15"
 openai.api_key = os.getenv("AZURE_OAI_KEY")
 
-def get_entities(query):
+def get_entities(query, sysms):
 
     user_input = query
-    #system_msg = "A user will tell you where they want to go (geographical location), what accessibility requirements they have and what they want to do (in free text form). You need to extract the geographic location, activites and accessibility requirements (they might give multiple places, activities or accessibility requirements. Extract all of those, no hyphens, and return only one key word for each, e.g. wheelchair instead of wheelchair access. Also make all words singular form.) from user-entered text. Return those as json"
-    system_msg = "You will be given a free text query from a user, containing information about their geographic location, what they are interested in doing in this location, and if they have a wheelchair accessibility requirement. You need to extract the geographic location, activities and accessibility requirements from the user-entered text. Return those as a well formatted json object, with the following keys: location, interests, wheelchair_accessibility_requirements. wheelchair_accessibility_requirements should be a boolean value"
+    system_msg = sysms
     messages = [
         {"role": "system", "content": system_msg},
         {"role": "user", "content": user_input}
@@ -32,7 +33,6 @@ def get_entities(query):
         stop=None
     )
     extracted_activities = response.choices[0].message['content']
-
     return json.loads(extracted_activities)
 
 def rank_places(query:str, places: List[Place]):
@@ -121,13 +121,19 @@ def Places(req: func.HttpRequest) -> func.HttpResponse:
     
     if query:
         try:
-            entities:dict = get_entities(query)
+          
+            system_msg_query = "You will be given a free text query from a user, containing information about their geographic location, what they are interested in doing in this location, and if they have a wheelchair accessibility requirement. You need to extract the geographic location, activities and accessibility requirements from the user-entered text. Return those as a well formatted json object, with the following keys: location, interests, wheelchair_accessibility_requirements. wheelchair_accessibility_requirements should be a boolean value"
+            entities:dict = get_entities(query, system_msg_query)
             if not entities.get("location"):
                 # set to adelaide if no location given
                 location = {'lat': -34.9284989, 'lng': 138.6007456}
             else:
                 location: dict = get_location_from_query(entities["location"])
             places: List[str] = get_places_from_query(entities["interests"], location)
+              # jostep stuff - fix and intergreate
+              #ragsearch = aoaidata.conversation_with_data(query, entities)
+              #   recommendations = ragsearch.get('choices')[0].get('messages')[1].get('content')
+              #   finalrec = get_entities("Extract top 5 places from each list and return as a non-numbered list. Choose a diverse set and respond with the list and nothing else", recommendations)
 
             # Add locked places to place list
             # if locked_places and len(locked_places)>0:
@@ -171,6 +177,7 @@ def Places(req: func.HttpRequest) -> func.HttpResponse:
                  f"Error: {e}",
                  status_code=400
             )
+
     else:
         return func.HttpResponse(
              "Please pass a query on the query string or in the request body. Example: govhack-tripplanner.azurewebsites.net/api/places?query='test'",
