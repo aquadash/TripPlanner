@@ -12,24 +12,32 @@ export interface Place {
   name: string;
   description: string;
   address: string;
-  city: string;
   location: {
     lat: number;
     lng: number;
   };
   phone: string;
-  imageUrl: string;
-  accessibilityFeatures: string[];
+  imageReference: string;
+  wheelchair_accessible_entrance: boolean;
   priciness: number;
   rating: number;
   numRatings: number;
   openNow: boolean;
+  status: string;
+  website: string;
+  types: string[];
+}
+
+interface ApiResponse {
+  description: string;
+  places: Place[];
 }
 
 function App() {
   // const [places, setPlaces] = useState<Place[]>([]);
   // const [itinerary, setItinerary] = useState<Place[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [description, setDescription] = useState<string>("");
 
   const [selected, setSelected] = useState<string | null>(null);
   // const [isHovered, setIsHovered] = useState<string>("");
@@ -136,14 +144,24 @@ function App() {
     }
   };
 
+  const getImageUrl = useCallback(async (ref: string) => {
+    fetch(
+      `https://maps.google.com/maps/api/place/photo?maxwidth=400&photo_reference=${ref}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`
+    )
+      .then((response) => response.json())
+      .then((data) => console.log(data));
+  }, []);
+
   const onGetResults = useCallback(
-    async (query: any) => {
+    async (query: any, retry?: number) => {
       setIsLoading(true);
       fetch(
-        `https://govhack-tripplanner.azurewebsites.net/api/places?query='${query}'`
+        `https://govhack-tripplanner.azurewebsites.net/api/places?query='${query}'&retry=${retry}`
       )
         .then((response) => response.json())
-        .then((data) => {
+        .then(async (data: ApiResponse) => {
+          // await getImageUrl(data.places[0].imageReference);
+          setDescription(data.description);
           const deDuplicatedPlaces = data.places.filter(
             (place: Place) =>
               !columns.itinerary.list.some(
@@ -165,25 +183,31 @@ function App() {
     [columns.itinerary.list]
   );
 
+  const handleGetMore = () => {
+    console.log("user wants to get more");
+
+    // onGetResults(query, 1);
+  };
+
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <Navbar />
       <SearchBar sendQuery={onGetResults} />
       <div className="App grid grid-cols-3 gap-4">
-        <Column col={columns.new} />
+        <Column
+          loading={isLoading}
+          col={columns.new}
+          onGetMore={columns.new.list.length > 0 ? handleGetMore : undefined}
+        />
         <Column col={columns.itinerary} />
 
         <div className="">
-          {isLoading ? (
-            <Loader />
-          ) : (
-            <Map
-              places={columns.itinerary.list}
-              goto={selected}
-              selected={selected}
-              onMarkerClick={(id: string | null) => setSelected(id)}
-            />
-          )}
+          <Map
+            places={columns.itinerary.list}
+            goto={selected}
+            selected={selected}
+            onMarkerClick={(id: string | null) => setSelected(id)}
+          />
         </div>
       </div>
     </DragDropContext>

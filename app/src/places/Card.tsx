@@ -1,7 +1,7 @@
 import React from "react";
 import { Place } from "../App";
 import { Draggable } from "react-beautiful-dnd";
-
+import { FaWheelchair } from "react-icons/fa";
 interface CardProps {
   place: Place;
   index: number;
@@ -21,7 +21,7 @@ const Card: React.FC<CardProps> = ({ place, onSelect, index }) => {
         >
           <div
             style={{
-              backgroundImage: `url(${place.imageUrl})`,
+              backgroundImage: `url(${place.imageReference})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
@@ -49,6 +49,11 @@ const Card: React.FC<CardProps> = ({ place, onSelect, index }) => {
                   </svg>
                   <p className="ml-1 text-sm font-semibold">{place.rating}</p>
                   <p className="text-sm ml-2">({place.numRatings} reviews)</p>
+                  {place.wheelchair_accessible_entrance && (
+                    <p className="text-sm ml-2 flex items-center gap-1">
+                      <FaWheelchair className="font-semibold" /> Friendly
+                    </p>
+                  )}
                   {/* <span className="ml-2 bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded border-green-400">
                     Open
                   </span> */}

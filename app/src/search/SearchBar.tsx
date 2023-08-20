@@ -8,7 +8,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ sendQuery }) => {
   const [query, setQuery] = useState("");
 
   return (
-    <div className="w-full">
+    <div className="block m-8">
       <form onSubmit={(e) => e.preventDefault()}>
         <label
           htmlFor="default-search"
