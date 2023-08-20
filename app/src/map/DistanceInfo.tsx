@@ -8,14 +8,6 @@ interface DistanceInfoProps {
   to: Place;
 }
 
-const toDistance = (distance: number) => {
-  if (distance >= 1000) {
-    return Math.round(distance / 1000.0) + " km";
-  } else {
-    return distance.toFixed(1) + " m";
-  }
-};
-
 const DistanceInfo: React.FC<DistanceInfoProps> = ({ from, to }) => {
   const [lineCenter, setLineCenter] = useState<google.maps.LatLng>();
 
@@ -33,18 +25,19 @@ const DistanceInfo: React.FC<DistanceInfoProps> = ({ from, to }) => {
           ),
           0.5
         );
+        console.log(center);
         setLineCenter(center);
       }
     };
 
     calculateLineCenter();
-  }, [from, to]);
+  }, [from.location, to.location]);
 
   return (
-    lineCenter && (
+    true && (
       <InfoWindowF
         position={lineCenter}
-        zIndex={98}
+        zIndex={100}
         options={{
           pixelOffset: new google.maps.Size(
             MAP_SETTINGS.PIXEL_OFFSET.X,
@@ -53,12 +46,12 @@ const DistanceInfo: React.FC<DistanceInfoProps> = ({ from, to }) => {
         }}
       >
         <div
-          style={{ backgroundColor: false ? "#fada5e" : "#247291" }}
+          style={{ backgroundColor: true ? "#fada5e" : "#247291" }}
           className={`rounded-md p-2 font-medium items-center inline-flex ${
-            false ? "text-black" : "text-white"
+            true ? "text-black" : "text-white"
           }`}
         >
-          {toDistance(parseFloat("123.45"))}
+          123
         </div>
       </InfoWindowF>
     )
